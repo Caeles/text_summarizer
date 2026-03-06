@@ -3,7 +3,7 @@
 Production-style NLP project for text summarization:
 - fine-tuning pipeline (PEGASUS)
 - FastAPI backend
-- Streamlit frontend
+- Vercel web frontend (`index.html`)
 - LangChain orchestration for long-text summarization
 
 ## Description
@@ -17,13 +17,15 @@ Production-style NLP project for text summarization:
 - `POST /summarize/langchain` with map-reduce summarization for long inputs
 - Output style control (`executive`, `concise`, `technical`, `bullets`)
 - Strict summary-length control (summary remains shorter than source)
-- Streamlit UX for live demo and JSON response inspection
+- Live demo and JSON response inspection on Vercel
 - Health endpoint and configurable CORS for deployment
 
 ## Runtime target
 
+- Primary runtime target: **Vercel**
 - Serverless entrypoint: `api/index.py`
 - Routing config: `vercel.json`
+- Vercel web UI: `index.html`
 
 ## Project structure
 
@@ -31,7 +33,8 @@ Production-style NLP project for text summarization:
 - `src/textSummarizer/pipeline`: stage orchestration
 - `src/textSummarizer/services/langchain_summarizer.py`: advanced summarization service
 - `app.py`: FastAPI API layer
-- `streamlit_app.py`: demo frontend
+- `index.html`: Web frontend
+- `streamlit_app.py`: optional local frontend
 - `tests/test_app.py`: API smoke tests
 
 ## Local development (optional)
@@ -66,11 +69,18 @@ Then fill at least:
 python app.py
 ```
 
-5) Run frontend locally (optional)
+5) Run Streamlit frontend locally (optional)
 
 ```bash
 streamlit run streamlit_app.py
 ```
+
+## Vercel routes
+
+- `/`
+- `/health` → health check
+- `/summarize/langchain` → summarization API
+- `/docs` → FastAPI docs
 
 ## API endpoints
 

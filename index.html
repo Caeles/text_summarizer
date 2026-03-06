@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Text Summarization</title>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <style>
+      :root {
+        --bg: #0e1117;
+        --card: #151a22;
+        --text: #e5e7eb;
+        --muted: #8b949e;
+        --primary: #7c3aed;
+        --border: rgba(255, 255, 255, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 28px 20px 40px;
+      }
+      .title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .subtitle {
+        color: var(--muted);
+        margin-bottom: 20px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+      }
+      h3 { margin-top: 0; }
+      label { display: block; margin: 10px 0 6px; color: var(--muted); font-size: 0.92rem; }
+      textarea, select, input[type="text"], input[type="number"] {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #0f1420;
+        color: var(--text);
+        padding: 10px 12px;
+      }
+      textarea { min-height: 260px; resize: vertical; }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      button {
+        margin-top: 14px;
+        width: 100%;
+        border: 0;
+        border-radius: 10px;
+        padding: 12px 14px;
+        background: var(--primary);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      .status { font-size: 0.9rem; color: var(--muted); margin: 10px 0; min-height: 20px; }
+      .result {
+        white-space: pre-wrap;
+        line-height: 1.5;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        background: #0f1420;
+        min-height: 170px;
+      }
+      .badges { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+      .badge {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .json-wrap {
+        margin-top: 12px;
+      }
+      details summary { cursor: pointer; color: var(--muted); }
+      pre {
+        overflow: auto;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px;
+        background: #0f1420;
+      }
+      @media (max-width: 900px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="title"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Summarization Studio</div>
+      <div class="subtitle">Vercel-native frontend calling your FastAPI endpoint.</div>
+
+      <div class="grid">
+        <section class="card">
+          <h3>Input</h3>
+          <label for="text">Text to summarize</label>
+          <textarea id="text">Our team conducted an AI project for automatic summarization of client meetings. The results show a 42% gain in document processing time, but we still have factuality errors on technical segments. The plan is to add a RAG layer and continuous evaluation before deployment.</textarea>
+
+          <div class="row">
+            <div>
+              <label for="style">Style</label>
+              <select id="style">
+                <option value="executive">executive</option>
+                <option value="concise">concise</option>
+                <option value="technical">technical</option>
+                <option value="bullets">bullets</option>
+              </select>
+            </div>
+            <div>
+              <label for="language">Output language</label>
+              <select id="language">
+                <option value="FR">FR</option>
+                <option value="EN" selected>EN</option>
+                <option value="ES">ES</option>
+                <option value="DE">DE</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="audience">Audience</label>
+              <input id="audience" type="text" value="recruiter" />
+            </div>
+            <div>
+              <label for="maxWords">Max words</label>
+              <input id="maxWords" type="number" min="60" max="500" value="180" />
+            </div>
+          </div>
+
+          <button id="runBtn"><i class="fa-solid fa-rocket"></i> Generate summary</button>
+          <div class="status" id="status"></div>
+        </section>
+
+        <section class="card">
+          <h3>Result</h3>
+          <div id="result" class="result"></div>
+          <div id="badges" class="badges"></div>
+
+          <div class="json-wrap">
+            <details>
+              <summary>Raw JSON</summary>
+              <pre id="json"></pre>
+            </details>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const runBtn = document.getElementById('runBtn');
+      const statusEl = document.getElementById('status');
+      const resultEl = document.getElementById('result');
+      const badgesEl = document.getElementById('badges');
+      const jsonEl = document.getElementById('json');
+
+      runBtn.addEventListener('click', async () => {
+        const payload = {
+          text: document.getElementById('text').value,
+          style: document.getElementById('style').value,
+          audience: document.getElementById('audience').value,
+          language: document.getElementById('language').value,
+          max_words: Number(document.getElementById('maxWords').value),
+          redact_pii: false,
+          run_quality_check: false,
+        };
+
+        if (!payload.text || !payload.text.trim()) {
+          statusEl.textContent = 'Add text before generating.';
+          return;
+        }
+
+        runBtn.disabled = true;
+        statusEl.textContent = 'Generating...';
+        resultEl.textContent = '';
+        badgesEl.innerHTML = '';
+        jsonEl.textContent = '';
+
+        const startedAt = performance.now();
+
+        try {
+          const response = await fetch('/summarize/langchain', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.detail || JSON.stringify(data));
+          }
+
+          resultEl.textContent = data.summary || '';
+          jsonEl.textContent = JSON.stringify(data, null, 2);
+
+          const meta = data.metadata || {};
+          const addBadge = (label, value) => {
+            const el = document.createElement('div');
+            el.className = 'badge';
+            el.textContent = `${label}: ${value}`;
+            badgesEl.appendChild(el);
+          };
+
+          addBadge('Strategy', meta.strategy || '-');
+          addBadge('Chunks', meta.chunk_count ?? '-');
+          addBadge('Language', meta.language || '-');
+          addBadge('Words', `${meta.summary_word_count ?? '-'} / ${meta.source_word_count ?? '-'}`);
+
+          const elapsed = ((performance.now() - startedAt) / 1000).toFixed(2);
+          statusEl.textContent = `Done in ${elapsed}s`;
+        } catch (error) {
+          statusEl.textContent = `Error: ${error.message}`;
+        } finally {
+          runBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
