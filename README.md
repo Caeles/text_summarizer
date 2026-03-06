@@ -46,10 +46,16 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-2) Install dependencies
+2) Install dependencies (Vercel-compatible lightweight set)
 
 ```bash
 pip install -r requirements.txt
+```
+
+For full local training/research stack (heavy dependencies):
+
+```bash
+pip install -r requirements-local.txt
 ```
 
 3) Configure environment
