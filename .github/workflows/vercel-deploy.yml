@@ -58,8 +58,5 @@ jobs:
       - name: Pull Vercel project settings
         run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
-      - name: Build project artifacts
-        run: vercel build --prod --token="$VERCEL_TOKEN"
-
       - name: Deploy to production
-        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: vercel deploy --prod --token="$VERCEL_TOKEN"
